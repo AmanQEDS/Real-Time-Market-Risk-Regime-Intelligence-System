@@ -11,4 +11,5 @@ matplotlib
 seaborn
 tqdm
 pyyaml
+alpha_vantage
 -e . 
