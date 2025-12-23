@@ -1,0 +1,13 @@
+prefix=A:/Real-Time Market Risk & Regime Intelligence System/venv/Library
+exec_prefix=A:/Real-Time Market Risk & Regime Intelligence System/venv/Library
+libdir=A:/Real-Time Market Risk & Regime Intelligence System/venv/Library/lib
+sharedlibdir=A:/Real-Time Market Risk & Regime Intelligence System/venv/Library/lib
+includedir=A:/Real-Time Market Risk & Regime Intelligence System/venv/Library/include
+
+Name: zlib
+Description: zlib compression library
+Version: 1.3.1
+
+Requires:
+Libs: -L${libdir} -L${sharedlibdir} -lz
+Cflags: -I${includedir}
