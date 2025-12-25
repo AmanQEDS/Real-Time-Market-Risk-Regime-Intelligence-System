@@ -1,46 +1,35 @@
 import pandas as pd
-from arch import arch_model
+from hmmlearn.hmm import GaussianHMM
 
 
-def fit_garch_model(
-    returns: pd.Series,
-    p: int = 1,
-    q: int = 1,
-    dist: str = "normal"
-) -> pd.Series:
+def detect_volatility_regimes(
+    volatility: pd.Series,
+    n_regimes: int = 2,
+) -> pd.DataFrame:
     """
-    Fit a GARCH(p, q) model to log returns and return conditional volatility.
-
-    Parameters
-    ----------
-    returns : pd.Series
-        Log return series
-    p : int
-        Order of ARCH term
-    q : int
-        Order of GARCH term
-    dist : str
-        Distribution assumption ('normal', 't', etc.)
-
-    Returns
-    -------
-    pd.Series
-        Conditional volatility series
+    Detect volatility regimes using a Gaussian Hidden Markov Model (HMM).
     """
-    # GARCH models expect returns in percentage terms
-    returns_pct = returns * 100
 
-    model = arch_model(
-        returns_pct,
-        vol="GARCH",
-        p=p,
-        q=q,
-        dist=dist,
-        rescale=False
+    vol = volatility.dropna().values.reshape(-1, 1)
+    index = volatility.dropna().index
+
+    model = GaussianHMM(
+        n_components=n_regimes,
+        covariance_type="full",
+        n_iter=1000,
+        random_state=42,
     )
 
-    fitted_model = model.fit(disp="off")
+    # Correct hmmlearn usage
+    model.fit(vol)
+    regimes = model.predict(vol)
 
-    conditional_volatility = fitted_model.conditional_volatility / 100
+    regime_df = pd.DataFrame(
+        {
+            "volatility": volatility.loc[index],
+            "regime": regimes,
+        },
+        index=index,
+    )
 
-    return conditional_volatility
+    return regime_df

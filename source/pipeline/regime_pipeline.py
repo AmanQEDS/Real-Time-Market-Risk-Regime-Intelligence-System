@@ -12,11 +12,11 @@ def run_regime_pipeline(
     """
 
     # Run risk pipeline
-    risk_df = run_risk_pipeline(symbol)
+    risk_df, garch_vol = run_risk_pipeline(symbol)
 
     # Detect regimes using GARCH volatility
     regime_df = detect_volatility_regimes(
-        risk_df["garch_volatility"],
+        garch_vol,
         n_regimes=n_regimes
     )
 
@@ -25,3 +25,4 @@ def run_regime_pipeline(
     final_df["regime"] = regime_df["regime"]
 
     return final_df
+

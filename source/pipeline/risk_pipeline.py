@@ -1,55 +1,24 @@
-import numpy as np
-import pandas as pd
-from hmmlearn.hmm import GaussianHMM
+from source.components.data_ingestion import fetch_daily_ohlc
+from source.components.data_transformation import transform_ohlc_data
+from source.components.risk_metrics import compute_risk_metrics
+from source.components.volatility_models import fit_garch_model
 
 
-def detect_volatility_regimes(
-    volatility: pd.Series,
-    n_regimes: int = 2,
-    covariance_type: str = "diag",
-    n_iter: int = 1000
-) -> pd.DataFrame:
+def run_risk_pipeline(
+    symbol: str,
+    outputsize: str = "compact",
+):
     """
-    Detect market regimes using Hidden Markov Model on volatility.
-
-    Parameters
-    ----------
-    volatility : pd.Series
-        Volatility series (e.g., GARCH conditional volatility)
-    n_regimes : int
-        Number of hidden regimes
-    covariance_type : str
-        Covariance type for HMM ('diag', 'full')
-    n_iter : int
-        Maximum number of iterations for convergence
-
-    Returns
-    -------
-    pd.DataFrame
-        DataFrame with columns:
-        ['volatility', 'regime']
+    Risk pipeline:
+    ingestion → transformation → risk metrics → GARCH volatility
     """
 
-    # Prepare data for HMM (must be 2D)
-    X = volatility.values.reshape(-1, 1)
+    df_raw = fetch_daily_ohlc(symbol, outputsize=outputsize)
 
-    hmm = GaussianHMM(
-        n_components=n_regimes,
-        covariance_type=covariance_type,
-        n_iter=n_iter,
-        random_state=42
-    )
+    df_transformed = transform_ohlc_data(df_raw)
 
-    hmm.fit(X)
+    risk_df = compute_risk_metrics(df_transformed)
 
-    hidden_states = hmm.predict(X)
+    garch_vol = fit_garch_model(risk_df["log_returns"])
 
-    regime_df = pd.DataFrame(
-        {
-            "volatility": volatility.values,
-            "regime": hidden_states
-        },
-        index=volatility.index
-    )
-
-    return regime_df
+    return risk_df, garch_vol
